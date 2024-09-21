@@ -16,6 +16,24 @@ using std::endl;
 #define tab "\t"
 #define delimiter "\n---------------------------------------\n"
 
+#define ENTER 13
+#define ESCAPE 27
+#define UP_ARROW 72
+#define DOWN_ARROW 80
+
+const char* MENU_ITEMS[] =
+{
+	"1. Загрузить базы из файла;",
+"2.Сохранить базу в файл",
+"3.Вывести базу на экран",
+"4.Вывести информацию по номеру",
+"5. Добавить нарушения",
+};
+
+const int MENU_SIZE =  sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]);
+
+
+
 const std::map<int, std::string> VIOLATIONS =
 {
 	{1,"Ремень безопасности"},
@@ -161,9 +179,10 @@ std::istream& operator>>(std::istream& is, Crime& obj)
 void print(const std::map<std::string, std::list<Crime>>& base);
 void save(const std::map<std::string, std::list<Crime>>& base, const std::string& filename);
 std::map<std::string, std::list<Crime>> load(const std::string& filename);
+int menu();
 
 //#define SAVE_CHECK
-#define LOAD_CHECK
+//#define LOAD_CHECK
 
 void main()
 {
@@ -183,10 +202,51 @@ cout << crime << endl;*/
 	save(base, "base.txt");
 #endif // SAVE_CHECK
 
+#ifdef LOAD_CHECK
 	std::map<std::string, std::list<Crime>> base = load("base.txt");
 	print(base);
+#endif // LOAD_CHECK
 
+	do
+	{
+		switch (menu()) 
+		{
+
+		}
+	} while (true);
 }
+int menu()
+{
+	int selected_item = 0;
+	char key;
+	do
+	{
+		//key = _getch();
+		system("CLS");
+		for (int i = 0; i < MENU_SIZE; i++)
+		{
+			cout << (i == selected_item ? "[" : " ");
+			cout.width(32);
+			cout << std::left;
+			cout << MENU_ITEMS [i];
+			cout << (i == selected_item ? "]" : " ");
+			cout << endl;
+		}
+		key = _getch();
+		switch (key)
+		{
+		case UP_ARROW: if (selected_item > 0)selected_item--; break;
+		case DOWN_ARROW: if (selected_item < MENU_SIZE - 1)selected_item++; break;
+		case ENTER: return selected_item;
+		case ESCAPE: return 0;
+		}
+	} while (key != ESCAPE);
+	{
+
+	}
+	return 0;
+}
+
 void print(const std::map<std::string, std::list<Crime>>& base)
 {
 	cout << delimiter << endl;
@@ -245,7 +305,7 @@ std::map<std::string, std::list<Crime>> load(const std::string& filename)
 			strcpy(sz_buffer, crimes.c_str());
 			char delimiters[] = ",";
 		    Crime crime(0, "place", "00:00 01.01.2000");
-			for (char* pch = strtok(sz_buffer, delimiters); pch; pch = strtok(NULL, delimiter))
+			for (char* pch = strtok(sz_buffer, delimiters); pch; pch = strtok(NULL, delimiters))
 			{
 				//std::string s_crime(pch);
 				std::stringstream ss_crime(pch, std::ios_base::in | std::ios_base::out);
