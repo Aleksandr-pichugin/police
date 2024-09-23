@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning (disable: 4326)
+#include <Windows.h>
 #include <iostream>
 #include<fstream>
 #include<string>
@@ -21,21 +22,32 @@ using std::endl;
 #define UP_ARROW 72
 #define DOWN_ARROW 80
 
-const char* MENU_ITEMS[] =
+/*const char* MENU_ITEMS[] =
 {
 	"1. Загрузить базы из файла;",
 "2.Сохранить базу в файл",
 "3.Вывести базу на экран",
 "4.Вывести информацию по номеру",
 "5. Добавить нарушения",
+};*/
+
+//const char* MENU_VIOATIONS[] =
+const std::map<int, std::string>MENU_ITEMS =
+{
+{ 1, " Загрузить базы из файла; " },
+{ 2, " Сохранить базу в файл" },
+{3, " Вывести базу на экран"},
+{4," Вывести информацию по номеру" },
+{ 5," Добавить нарушения" },
 };
 
-const int MENU_SIZE =  sizeof(MENU_ITEMS) / sizeof(MENU_ITEMS[0]);
+//const int MENU_SIZE =  sizeof(MENU_VIOLATIONS) / sizeof(MENU_VIOLATIONS[0]);
 
 
 
 const std::map<int, std::string> VIOLATIONS =
 {
+	{0, "N/A"},
 	{1,"Ремень безопасности"},
 	{2,"Парковка в неположенном месте"},
 	{3,"Пересечение сплошной"},
@@ -130,8 +142,34 @@ public:
 		this->time.tm_year = time_elements[4] - 1900;
 	}
 
+	void set_timestamp(time_t timestamp)
+	{
+		time = *localtime(&timestamp);
+	}
+
+	explicit Crime
+	(
+		int violation_id = 0,
+		const std::string& place = "Place",
+		const std::string& time = "00:00 01.01.2000"
+	)
+	{
+		this->time = {};
+		this->set_violation_id(violation_id);
+		this->set_place(place);
+		this->set_time(time);
+
+
+		cout << "Constructor:\t" << this << endl;
+
+	}
+	~Crime()
+	{
+		cout << "Destructor:\t" << this << endl;
+	}
+};
 	// Constractors:
-	Crime(int violation_id, const std::string& place, const std::string& time)
+	/*Crime(int violation_id, const std::string& place, const std::string& time)
 	{
 		//set_license_plate(license_plate);
 		this->time = {};
@@ -152,10 +190,10 @@ public:
 		cout << "Destruktor:\t" << this << endl;
 #endif // DEBUG
 	}
-};
+};*/
 std::ostream& operator<<(std::ostream& os, const Crime& obj)
 {
-	return os << obj.get_time() << "\t" << obj.get_place() << " - " << obj.get_violation();
+	return os << obj.get_time() << ":\t" << obj.get_place() << " - " << obj.get_violation();
 }
 std::ofstream& operator<<(std::ofstream& os, const Crime& obj)
 {
@@ -175,11 +213,11 @@ std::istream& operator>>(std::istream& is, Crime& obj)
 	obj.set_place(place);
 	return is;
 }
-
+int menu();
 void print(const std::map<std::string, std::list<Crime>>& base);
 void save(const std::map<std::string, std::list<Crime>>& base, const std::string& filename);
 std::map<std::string, std::list<Crime>> load(const std::string& filename);
-int menu();
+//int menu();
 
 //#define SAVE_CHECK
 //#define LOAD_CHECK
@@ -206,44 +244,53 @@ cout << crime << endl;*/
 	std::map<std::string, std::list<Crime>> base = load("base.txt");
 	print(base);
 #endif // LOAD_CHECK
-
+	std::map<std::string, std::list<Crime>> base = load("base.txt");
 	do
 	{
 		switch (menu()) 
 		{
-
+		case 0: return;
+		case 1: base = load("base.txt"); break;
+		case 2: save(base, "base.txt"); break;
+		case 3: print(base); break;
+		case 4: cout << "Скоро будет " << endl; break;
+		case 5: cout << "Скоро будет " << endl; break;
 		}
 	} while (true);
 }
 int menu()
 {
-	int selected_item = 0;
+	int selected_item = 1;
 	char key;
 	do
 	{
 		//key = _getch();
 		system("CLS");
-		for (int i = 0; i < MENU_SIZE; i++)
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		for (int i = 1; i <= MENU_ITEMS.size(); i++)
 		{
 			cout << (i == selected_item ? "[" : " ");
+			cout << i << ". ";
 			cout.width(32);
 			cout << std::left;
-			cout << MENU_ITEMS [i];
-			cout << (i == selected_item ? "]" : " ");
+			if (i == selected_item)SetConsoleTextAttribute(hConsole, 0x70);
+			//SetConsoleTextAttribute(hConsole, 0x70);
+			cout << MENU_ITEMS.at(i);
+			SetConsoleTextAttribute(hConsole, 0x07);
+			cout << (i == selected_item ? "  ]" : " "); 
 			cout << endl;
 		}
 		key = _getch();
 		switch (key)
 		{
-		case UP_ARROW: if (selected_item > 0)selected_item--; break;
-		case DOWN_ARROW: if (selected_item < MENU_SIZE - 1)selected_item++; break;
-		case ENTER: return selected_item;
+		case UP_ARROW: /*if (selected_item > 1)*/selected_item--; break;
+		case DOWN_ARROW: /*if (selected_item < MENU_ITEMS.size())*/ selected_item++; break;
+		case ENTER: return selected_item ;
 		case ESCAPE: return 0;
 		}
+		if (selected_item == MENU_ITEMS.size() + 1)selected_item = 1;
+		if (selected_item == 0)selected_item = MENU_ITEMS.size();
 	} while (key != ESCAPE);
-	{
-
-	}
 	return 0;
 }
 
@@ -255,13 +302,15 @@ void print(const std::map<std::string, std::list<Crime>>& base)
 		++map_it)
 	{
 		cout << map_it->first << ":\n";
-		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end();
+			++it)
 		{
-			cout << *it << endl;
+			cout<<"\t" << *it << endl;
 		}
 		cout << delimiter << endl;
 	}
 	cout<<"Количество номеров в базе"<<base.size()<<endl; 
+	system("PAUSE");
 }
 void save(const std::map<std::string, std::list<Crime>>& base, const std::string& filename)
 {
@@ -272,7 +321,8 @@ void save(const std::map<std::string, std::list<Crime>>& base, const std::string
 		++map_it)
 	{
 		fout << map_it->first << ":\t";
-		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end();
+			++it)
 		{
 			fout << *it<<",";
 		}
